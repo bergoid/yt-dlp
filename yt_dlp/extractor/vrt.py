@@ -13,6 +13,9 @@ from ..utils import (
     urlencode_postdata
 )
 
+def has_get(obj):
+    """Returns True if obj.get() exists, False otherwise"""
+    return ( hasattr(obj, 'get') and callable(getattr(obj, 'get')) )
 
 class VRTIE(GigyaBaseIE):
     IE_DESC = 'VRT'
@@ -102,25 +105,39 @@ class VRTIE(GigyaBaseIE):
 
         model_json = self._download_json(f'{url.strip("/")}.model.json', display_id,
                                          'Downloading asset JSON', 'Unable to download asset JSON')
-        details = model_json.get('details')
-        actions = details.get('actions')
-        title = details.get('title')
-        episode_publication_id = actions[2].get('episodePublicationId')
-        episode_video_id = actions[2].get('episodeVideoId')
+        details = model_json.get('details', {})
+        actions = details.get('actions', [{}, {}, {}])
+        title = details.get('title','no_title')
+        episode_publication_id = actions[2].get('episodePublicationId', 'no_episodePublicationId')
+        episode_video_id = actions[2].get('episodeVideoId', 'no_episodeVideoId')
         video_id = f'{episode_publication_id}${episode_video_id}'
-        description = details.get('description')
-        episode = details.get('data').get('episode')
-        display_id = episode.get('name')
-        timestamp = parse_iso8601(episode.get('onTime').get('raw'))
+        description = details.get('description', 'no_description')
+        episode = details.get('data', {}).get('episode', {})
+        display_id = episode.get('name', 'no_display_id')
+        timestamp = parse_iso8601(episode.get('onTime', {}).get('raw', '2023-01-01T00:00:00.000+01:00'))
         upload_date = strftime('%Y%m%d', gmtime(timestamp))
-        series_info = details.get('data')
-        series = series_info.get('program').get('title')
-        season = series_info.get('season').get('title').get('value')
-        season_number = series_info.get('season').get('title').get('raw')
-        season_id = series_info.get('season').get('id')
-        episode = series_info.get('episode').get('number').get('value')
-        episode_number = series_info.get('episode').get('number').get('raw')
-        episode_id = series_info.get('episode').get('id')
+        series_info = details.get('data', {})
+        series = series_info.get('program', {}).get('title', 'no_program_title')
+        season = series_info.get('season', {}).get('title', {}).get('value', 'no_season_title')
+        season_number = series_info.get('season', {}).get('title', {}).get('raw', 0)
+        season_id = series_info.get('season', {}).get('id', 'no_season_id')
+        episode = series_info.get('episode', {}).get('number', {}).get('value', 'no_episode_name')
+        episode_number = series_info.get('episode', {}).get('number', {}).get('raw', 0)
+        episode_id = series_info.get('episode', {}).get('id', 'no_episode_id')
+
+#         print(f'{episode_publication_id=}')
+#         print(f'{episode_video_id=}')
+#         print(f'{video_id}')
+#         print(f'{description}')
+#         print(f'{display_id}')
+#         print(f'{upload_date=}')
+#         print(f'{series=}')
+#         print(f'{season=}')
+#         print(f'{season_number=}')
+#         print(f'{season_id=}')
+#         print(f'{episode=}')
+#         print(f'{episode_number=}')
+#         print(f'{episode_id=}')
 
         video_info = None
         vrtnutoken = ""
